@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">LocationUpdatesOwnTryKotlinV1</string>
+    <string name="start_updates">Start Updates</string>
+    <string name="stop_updates">STOPPP</string>
+    <string name="location_settings_inadequate_warning">The location settings on the device are not         adequate to run this sample. Fix in Settings.</string>
+    <string name="permission_rationale">DAWAJ TOOOOOOOOOO</string>
+    <string name="permission_denied_explanation">nie ma permision bo nie</string>
+    <string name="settings">settingsy</string>
+    <string name="longitude">Longitude</string>
+    <string name="latitude">latitude</string>
+</resources>
