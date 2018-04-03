@@ -25,6 +25,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -109,8 +110,9 @@ class MainActivity : AppCompatActivity() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
 
-                mCurrentLocation = locationResult.getLastLocation()
-                mLastUpdateTime = DateFormat.getTimeInstance().format(Date())
+                mCurrentLocation = locationResult.lastLocation
+                var sdf = SimpleDateFormat("HH:mm")
+                mLastUpdateTime = sdf.format(Date())
                 updateLocationUI()
             }
 
@@ -201,12 +203,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setButtonsEnabledState() {
-        if (mRequestingLocationUpdates == true) {
-            mStartUpdatesButton.setEnabled(false)
-            mStopUpdatesButton.setEnabled(true)
+        if (mRequestingLocationUpdates) {
+            mStartUpdatesButton.isEnabled = false
+            mStopUpdatesButton.isEnabled = true
         } else {
-            mStartUpdatesButton.setEnabled(true)
-            mStopUpdatesButton.setEnabled(false)
+            mStartUpdatesButton.isEnabled = true
+            mStopUpdatesButton.isEnabled = false
         }
     }
 
@@ -259,7 +261,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // Within {@code onPause()}, we remove location updates. Here, we resume receiving
         // location updates if the user has requested them.
-        if (mRequestingLocationUpdates == true && checkPermissions()) {
+        if (mRequestingLocationUpdates && checkPermissions()) {
             startLocationUpdates()
         } else if (!checkPermissions()) {
             requestPermissions()

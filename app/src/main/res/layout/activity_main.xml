@@ -10,7 +10,7 @@
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -43,79 +43,135 @@
                 android:text="@string/stop_updates" />
         </LinearLayout>
 
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Latitude\t|" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Longitude\t|" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Time\t\t|" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="RSRP |" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="RSRQ |" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="RSSNR |" />
-        </LinearLayout>
-
-        <LinearLayout
+        <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/latitude_label"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginStart="8dp"
+                android:text="Latitude"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/longitude_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:text="Longitude"
+                app:layout_constraintStart_toEndOf="@id/latitude_label"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/time_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="32dp"
+                android:text="Time"
+                app:layout_constraintEnd_toStartOf="@+id/rsrp_label"
+                app:layout_constraintStart_toEndOf="@+id/longitude_label"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/rsrp_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:text="RSRP"
+                app:layout_constraintEnd_toStartOf="@+id/rsrq_label"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/rsrq_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:text="RSRQ"
+                app:layout_constraintEnd_toStartOf="@+id/rssnr_label"
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+            <TextView
+                android:id="@+id/rssnr_label"
+                android:layout_width="44dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="RSSNR"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/latitude_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                app:layout_constraintEnd_toStartOf="@+id/longitude_label"
+                app:layout_constraintStart_toStartOf="@+id/latitude_label"
+                app:layout_constraintTop_toBottomOf="@id/latitude_label" />
 
             <TextView
                 android:id="@+id/longitude_text"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                />
+                android:layout_marginStart="28dp"
+                app:layout_constraintEnd_toStartOf="@+id/last_update_time_text"
+                app:layout_constraintStart_toEndOf="@+id/latitude_label"
+                app:layout_constraintTop_toBottomOf="@+id/longitude_label" />
+
             <TextView
                 android:id="@+id/last_update_time_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="10dp"
+                android:textAlignment="viewEnd"
+                app:layout_constraintEnd_toStartOf="@+id/signal_strength_rsrp"
+                app:layout_constraintStart_toEndOf="@+id/longitude_label"
+                app:layout_constraintTop_toBottomOf="@+id/time_label" />
+
             <TextView
                 android:id="@+id/signal_strength_rsrp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:textAlignment="viewEnd"
+                app:layout_constraintEnd_toStartOf="@+id/rsrq_label"
+                app:layout_constraintTop_toBottomOf="@+id/rsrp_label"
+                tools:text="-80" />
+
             <TextView
                 android:id="@+id/signal_strength_rsrq"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="16dp"
+                app:layout_constraintEnd_toStartOf="@+id/rssnr_label"
+                app:layout_constraintStart_toEndOf="@+id/rsrp_label"
+                app:layout_constraintTop_toBottomOf="@+id/rsrq_label" />
+
             <TextView
                 android:id="@+id/signal_strength_rssnr"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                app:layout_constraintEnd_toEndOf="@+id/rssnr_label"
+                app:layout_constraintStart_toStartOf="@+id/rssnr_label"
+                app:layout_constraintTop_toBottomOf="@+id/rssnr_label" />
+        </android.support.constraint.ConstraintLayout>
+        </ScrollView>
+</LinearLayout>
 
-
-        <TextView
-            android:id="@+id/location_inadequate_warning"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/location_settings_inadequate_warning"
-            android:visibility="invisible" />
-    </LinearLayout>
+    <TextView
+        android:id="@+id/location_inadequate_warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/location_settings_inadequate_warning"
+        android:visibility="invisible" />
 </android.support.constraint.ConstraintLayout>
