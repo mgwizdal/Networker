@@ -21,13 +21,13 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import com.example.android.locationupdatesowntrykotlinv1.db.SignalSample
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         mSignalStrengthLteRssnrTextView = findViewById(R.id.signal_strength_rssnr)
 
         mTelephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
-        mTelephonyManager?.listen(mPhoneStatelistener,PhoneStateListener.LISTEN_SIGNAL_STRENGTHS)
+        mTelephonyManager?.listen(mPhoneStatelistener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS)
 
         mLastUpdateTime = ""
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -216,24 +216,40 @@ class MainActivity : AppCompatActivity() {
     private fun updateLocationUI() {
         //changes
         if (mCurrentLocation != null) {
+            var currentLatitude = mCurrentLocation?.latitude.toString()
+            var currentLongitude = mCurrentLocation?.longitude.toString()
+            var currentTime = mLastUpdateTime.toString()
 
 
-            mLatitudeTextView.append(mCurrentLocation?.latitude.toString())
-            mLongitudeTextView.append(mCurrentLocation?.longitude.toString())
-            mLastUpdateTimeTextView.append(mLastUpdateTime.toString())
-            if(!mPhoneStatelistener.signalStrengthRsrp.equals("0")  ){
-                mSignalStrengthLteRsrpTextView.append(mPhoneStatelistener.signalStrengthRsrp)
-                Log.i("MainAct", "setting signal changes" +mPhoneStatelistener.signalStrengthRsrp)
-                mSignalStrengthLteRsrqTextView.append(mPhoneStatelistener.signalStrengthRsrq)
-                Log.i("MainAct", "setting signal changes" +mPhoneStatelistener.signalStrengthRsrq)
-                mSignalStrengthLteRssnrTextView.append(mPhoneStatelistener.signalStrengthRssnr)
-                Log.i("MainAct", "setting signal changes" +mPhoneStatelistener.signalStrengthRssnr)
+            mLatitudeTextView.append(currentLatitude)
+            mLongitudeTextView.append(currentLongitude)
+            mLastUpdateTimeTextView.append(currentTime)
+            if (!mPhoneStatelistener.signalStrengthRsrp.equals("0")) {
+                var currentRsrp = mPhoneStatelistener.signalStrengthRsrp
+                var currentRsrq = mPhoneStatelistener.signalStrengthRsrq
+                var currentRssnr = mPhoneStatelistener.signalStrengthRssnr
+                mSignalStrengthLteRsrpTextView.append(currentRsrp)
+                Log.i("MainAct", "setting signal changes" + currentRsrp)
+                mSignalStrengthLteRsrqTextView.append(currentRsrq)
+                Log.i("MainAct", "setting signal changes" + currentRsrq)
+                mSignalStrengthLteRssnrTextView.append(currentRssnr)
+                Log.i("MainAct", "setting signal changes" + currentRssnr)
+
+                var signalSample = SignalSample(latitude = currentLatitude,
+                        longitude = currentLongitude,
+                        time = currentTime,
+                        rsrp = currentRsrp,
+                        rsrq = currentRsrq,
+                        rssnr = currentRssnr)
+                Thread(Runnable {
+                    App.database?.signalSampleDao()?.insert(signalSample)
+                }).start()
             }
             newLine()
         }
     }
 
-    private fun newLine(){
+    private fun newLine() {
         mLatitudeTextView.append(newLineString)
         mLongitudeTextView.append(newLineString)
         mLastUpdateTimeTextView.append(newLineString)
@@ -241,6 +257,7 @@ class MainActivity : AppCompatActivity() {
         mSignalStrengthLteRsrqTextView.append(newLineString)
         mSignalStrengthLteRssnrTextView.append(newLineString)
     }
+
     private fun stopLocationUpdates() {
         if (mRequestingLocationUpdates == false) {
             Log.d(TAG, "stopLocationUpdates: updates never requested, no-op.")
@@ -306,7 +323,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Return the current state of the permissions needed.
      */
-     fun checkPermissions(): Boolean {
+    fun checkPermissions(): Boolean {
         val permissionState = ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
         return permissionState == PackageManager.PERMISSION_GRANTED
