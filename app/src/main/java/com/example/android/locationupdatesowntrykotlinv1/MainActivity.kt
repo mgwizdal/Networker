@@ -9,10 +9,13 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
+import android.os.AsyncTask
+import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
+import android.support.annotation.RequiresApi
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.telephony.*
@@ -22,15 +25,19 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import com.example.android.locationupdatesowntrykotlinv1.db.SignalSample
+import com.example.android.locationupdatesowntrykotlinv1.downloadSpeed.SpeedTaskView
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import com.example.android.locationupdatesowntrykotlinv1.downloadSpeed.SpeedTestTask
+import fr.bmartel.speedtest.model.SpeedTestError
+import java.math.BigDecimal
+import java.text.DecimalFormat
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SpeedTaskView {
     private val TAG = MainActivity::class.java.simpleName
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
 
@@ -57,7 +64,8 @@ class MainActivity : AppCompatActivity() {
     lateinit private var mLongitudeTextView: TextView
 
     private var mRequestingLocationUpdates: Boolean = false
-
+    private var speedTestTask : SpeedTestTask? = null
+    private var currentTransferRate : String? = null
     private var mLastUpdateTime: String? = null
 
     //changes
@@ -68,7 +76,6 @@ class MainActivity : AppCompatActivity() {
 
     var mTelephonyManager: TelephonyManager? = null
     var mPhoneStatelistener = MyPhoneListener()
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,7 +99,6 @@ class MainActivity : AppCompatActivity() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         mSettingsClient = LocationServices.getSettingsClient(this)
 
-
         createLocationCallback()
         createLocationRequest()
         buildLocationSettingsRequest()
@@ -111,7 +117,7 @@ class MainActivity : AppCompatActivity() {
                 super.onLocationResult(locationResult)
 
                 mCurrentLocation = locationResult.lastLocation
-                var sdf = SimpleDateFormat("HH:mm")
+                val sdf = SimpleDateFormat("HH:mm")
                 mLastUpdateTime = sdf.format(Date())
                 updateLocationUI()
             }
@@ -141,10 +147,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun startUpdatesButtonHandler(view: View) {
-        if (mRequestingLocationUpdates == false) {
+        if (!mRequestingLocationUpdates) {
             mRequestingLocationUpdates = true
             setButtonsEnabledState()
             startLocationUpdates()
+
         }
     }
 
@@ -167,7 +174,12 @@ class MainActivity : AppCompatActivity() {
                     } catch (e: SecurityException) {
                         Log.e(TAG, "Security Exception!!!! : " + e.stackTrace)
                     }
-
+                    if(speedTestTask?.status == AsyncTask.Status.RUNNING){
+                        speedTestTask?.cancel(true)
+                    }
+                    speedTestTask = SpeedTestTask(this)
+                    speedTestTask!!.execute()
+                    //mDownloadSpeedListener.initialize(speedTestSocket)
                     updateUI()
                 }
                 ?.addOnFailureListener(this) { e ->
@@ -197,6 +209,7 @@ class MainActivity : AppCompatActivity() {
                 }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun updateUI() {
         setButtonsEnabledState()
         updateLocationUI()
@@ -213,6 +226,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     // metody allcellinfo, neighbouring cell info, celllocation zawiodly, jedynie metoda PhoneStateListenera zadziałało, z refleksją
+    @SuppressLint("MissingPermission")
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun updateLocationUI() {
         //changes
         if (mCurrentLocation != null) {
@@ -221,10 +236,14 @@ class MainActivity : AppCompatActivity() {
             var currentTime = mLastUpdateTime.toString()
 
 
-            mLatitudeTextView.append(currentLatitude)
+            // mLatitudeTextView.append(currentLatitude)
             mLongitudeTextView.append(currentLongitude)
             mLastUpdateTimeTextView.append(currentTime)
-            if (!mPhoneStatelistener.signalStrengthRsrp.equals("0")) {
+            mLatitudeTextView.append(currentTransferRate.toString())
+
+
+
+            if (!mPhoneStatelistener.signalStrengthRsrp.equals("0") && mTelephonyManager?.dataNetworkType == TelephonyManager.NETWORK_TYPE_LTE) {
                 var currentRsrp = mPhoneStatelistener.signalStrengthRsrp
                 var currentRsrq = mPhoneStatelistener.signalStrengthRsrq
                 var currentRssnr = mPhoneStatelistener.signalStrengthRssnr
@@ -240,7 +259,8 @@ class MainActivity : AppCompatActivity() {
                         time = currentTime,
                         rsrp = currentRsrp,
                         rsrq = currentRsrq,
-                        rssnr = currentRssnr)
+                        rssnr = currentRssnr,
+                        transferRate = currentTransferRate.orEmpty())
                 Thread(Runnable {
                     App.database?.signalSampleDao()?.insert(signalSample)
                 }).start()
@@ -293,7 +313,35 @@ class MainActivity : AppCompatActivity() {
         // Remove location updates to save battery.
         stopLocationUpdates()
     }
+    override fun onError(speedTestError: SpeedTestError) {
+        currentTransferRate = ""
+        if(speedTestError == SpeedTestError.CONNECTION_ERROR){
+            Log.i(TAG, "speedtest error" )
+        }
+    }
 
+    override fun onCompletion() {
+        if(mRequestingLocationUpdates){
+            speedTestTask = SpeedTestTask(this)
+            speedTestTask!!.execute()
+        }else{
+            speedTestTask?.cancel(true)
+            currentTransferRate = ""
+        }
+    }
+
+    override fun onProgress(transferRate: BigDecimal) {
+        if(mRequestingLocationUpdates) {
+            val df = DecimalFormat()
+            df.maximumFractionDigits = 2
+            df.minimumFractionDigits = 0
+            val transferRateInBytes = transferRate.divide(BigDecimal(1000))
+
+            currentTransferRate = df.format(transferRateInBytes)
+        }else{
+            currentTransferRate = ""
+        }
+    }
     /**
      * Stores activity data in the Bundle.
      */
@@ -350,7 +398,7 @@ class MainActivity : AppCompatActivity() {
             // sets the permission in a given state or the user denied the permission
             // previously and checked "Never ask again".
             ActivityCompat.requestPermissions(this@MainActivity,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_PHONE_STATE),
                     REQUEST_PERMISSIONS_REQUEST_CODE)
         }
     }

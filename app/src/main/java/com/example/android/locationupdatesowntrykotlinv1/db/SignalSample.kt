@@ -12,6 +12,6 @@ data class SignalSample(
         val time : String,
         val rsrp : String,
         val rsrq : String,
-        val rssnr : String
-) {
-}
+        val rssnr : String,
+        val transferRate : String
+)
